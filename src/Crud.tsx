@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { faEdit } from "@fortawesome/free-solid-svg-icons"; 
-import { faPlus } from "@fortawesome/free-solid-svg-icons"; 
+import { faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+
+
 
 function Crud() {
   const [records, setRecords] = useState([
@@ -19,11 +21,27 @@ function Crud() {
     { id: 10, name: "yza", age: 50, salary: 50000, mobile: "5544332211" },
   ]);
 
+
+
   const [show, setShow] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({id: "",name: "",age: "",salary: "",mobile: "",});
-  const [formErrors, setFormErrors] = useState({ name: "", age: "", salary: "", mobile: "", });
+  const [formData, setFormData] = useState({
+    id: "",
+    name: "",
+    age: "",
+    salary: "",
+    mobile: "",
+  });
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    age: "",
+    salary: "",
+    mobile: "",
+  });
   const [searchTerm, setSearchTerm] = useState("");
+  const [sorting, setSorting] = useState({ key: "name", ascending: true });
+
+
 
   const handleClose = () => {
     setShow(false);
@@ -42,19 +60,50 @@ function Crud() {
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete?")) {
-      setRecords(records.filter((record) => record.id !== id)); // another way - find index and use splice
+      setRecords(records.filter((record) => record.id !== id));
     }
   };
+
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+
 
     setFormErrors((prevErrors) => ({
       ...prevErrors,
       [name]: "",
     }));
   };
+
+
+
+  const applySorting = (key) => {
+    if (sorting.key === key) {
+      setSorting({ ...sorting, ascending: !sorting.ascending });
+    } else {
+      setSorting({ key: key, ascending: true });
+    }
+  };
+
+  useEffect(() => {
+    const sortedRecords = [...records].sort((a, b) => {
+      if (a[sorting.key] < b[sorting.key]) {
+        return sorting.ascending ? -1 : 1;
+      }
+      if (a[sorting.key] > b[sorting.key]) {
+        return sorting.ascending ? 1 : -1;
+      }
+      return 0;
+    });
+    setRecords(sortedRecords);
+  }, [sorting, records]);
+
+
+
 
   const validateForm = () => {
     const errors = {};
@@ -69,11 +118,14 @@ function Crud() {
     return Object.keys(errors).length === 0;
   };
 
+
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
       if (editMode) {
-        setRecords( records.map((record) =>record.id === formData.id ? formData : record)
+        setRecords(records.map((record) => record.id === formData.id ? formData : record)
         );
       } else {
         setRecords([...records, { ...formData, id: records.length + 2 }]);
@@ -82,6 +134,7 @@ function Crud() {
     }
   };
 
+  
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -91,31 +144,39 @@ function Crud() {
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between mb-3 ">
-        <div className="d-flex  align-items-center mb-3 gap-0">
+        <div className="d-flex align-items-center mb-3 gap-0">
           <h2>Crud Table</h2>
           <input
             type="text"
             className="form-control w-50 "
             placeholder="Search..."
             value={searchTerm}
-            onChange={handleSearch} 
-            
+            onChange={handleSearch}
           />
-         
         </div>
         <Button variant="primary" onClick={handleShow}>
-         Add <FontAwesomeIcon icon={faPlus} />
+          Add <FontAwesomeIcon icon={faPlus} />
         </Button>
       </div>
       <table className="table table-bordered">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Age</th>
+            <th
+              className="p-2"
+              onClick={() => applySorting("name")}
+              style={{ cursor: "pointer" }}
+            >
+              Name {sorting.key === "name" && (sorting.ascending ? "▲" : "▼")}
+            </th>
+            
+            <th className="p-2" onClick={() => applySorting("age")} style={{ cursor: "pointer" }}>
+                            Age {sorting.key === "age" && (sorting.ascending ? "▲" : "▼")}
+                        </th>
             <th>Salary</th>
             <th>Mobile</th>
             <th>Actions</th>
@@ -213,11 +274,7 @@ function Crud() {
               </Form.Control.Feedback>
             </Form.Group>
             <div className="d-flex justify-content-end mt-3">
-              <Button
-                variant="primary"
-                onClick={handleClose}
-                className="me-2"
-              >
+              <Button variant="primary" onClick={handleClose} className="me-2">
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
@@ -230,4 +287,5 @@ function Crud() {
     </div>
   );
 }
+
 export default Crud;
